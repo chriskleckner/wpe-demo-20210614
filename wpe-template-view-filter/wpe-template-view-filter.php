@@ -2,8 +2,8 @@
 /**
 * Plugin Name: WP Engine Template View Filter
 * Plugin URI: https://github.com/chriskleckner
-* Description: Adds dropdown to Filter by template on Pages admin. Displays template info in the admin bar for logged in Admins and Authors when viweing pages.
-* Version: 1.0
+* Description: Adds dropdown to filter by template on Pages admin. Adds Pages capabilities to Author Role. Displays template info in the admin bar for logged in Admins, Editors and Authors when viweing pages.
+* Version: 1.3
 * Author: Chris Kleckner
 * Author URI: https://github.com/chriskleckner
 */
