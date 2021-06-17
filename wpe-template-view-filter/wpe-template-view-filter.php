@@ -8,7 +8,7 @@
 * Author URI: https://github.com/chriskleckner
 */
 
-// By default, WordPress Authors cannot manage Pages so this function adds the capability. This could be extended in an options page to enable access and further define capabilities. 
+// Since by default, WordPress Authors cannot manage Pages, the following function adds the proper Role capabilities. This could be extended in an "options" page to manually configure access and further define capabilities.
 function wpe_template_view_filter_required_role_caps() {
   // Gets the simple_role role object.
   $role = get_role( 'author' );
@@ -28,21 +28,21 @@ function show_current_page_template( $wp_admin_bar ) {
 
   if ( ! is_admin() ) {
 
-    if( current_user_can('author') || current_user_can('administrator') ) {
+    if( current_user_can('author') || current_user_can('editor') || current_user_can('administrator') ) {
 
-      $templates = wp_get_theme()->get_page_templates();
-      $template_name = '';
+		$templates = wp_get_theme()->get_page_templates();
+		$template_name = '';
 
-      foreach($templates as $key => $val) {
-        if( $key == basename( get_page_template() ) ) {
-          $template_name = $val;
-        }
-      }
+		foreach($templates as $key => $val) {
+			if( $key == basename( get_page_template() ) ) {
+				$template_name = $val;
+			}
+		}
 
-      $args = array(
-        'id' => 'current_page_template',
-        'title' => 'Template: '.$template_name.' ('.basename( get_page_template() ).')'
-      );
+		$args = array(
+			'id' => 'current_page_template',
+			'title' => 'Template: '.$template_name.' ('.basename( get_page_template() ).')'
+			);
 
       $wp_admin_bar->add_node( $args );
     }
@@ -53,10 +53,10 @@ function show_current_page_template( $wp_admin_bar ) {
 add_filter( 'manage_pages_columns', 'page_column_views' );
 function page_column_views( $defaults )
 {
-  if( current_user_can('author') || current_user_can('administrator') ) {
-    $defaults['template'] = __('Template', 'textdomain');
-    return $defaults;
-  }
+	if( current_user_can('author') || current_user_can('administrator') ) {
+		$defaults['template'] = __('Template', 'textdomain');
+		return $defaults;
+	}
 }
 
 
@@ -64,34 +64,35 @@ function page_column_views( $defaults )
 add_action( 'manage_pages_custom_column', 'page_custom_column_views', 5, 2 );
 function page_custom_column_views( $column_name, $id )
 {
-  if( current_user_can('author') || current_user_can('administrator') ) {
+	if( current_user_can('author') || current_user_can('administrator') ) {
 
-    if ( $column_name === 'template' ) {
+		if ( $column_name === 'template' ) {
 
-      $set_template = get_post_meta( get_the_ID(), '_wp_page_template', true );
+			$set_template = get_post_meta( get_the_ID(), '_wp_page_template', true );
 
-      if ( $set_template == 'default' ) {
-        echo __('Default Template', 'textdomain');
-      }
+			if ( $set_template == 'default' ) {
+				echo __('Default Template', 'textdomain');
+			}
 
-      $templates = get_page_templates();
+			$templates = get_page_templates();
 
-      ksort( $templates );
+			ksort( $templates );
 
-      foreach ( array_keys( $templates ) as $template ) :
-        if ( $set_template == $templates[$template] ) echo $template;
-      endforeach;
-    }
-  }
+			foreach ( array_keys( $templates ) as $template ) {
+				if ( $set_template == $templates[$template] ) echo $template;
+			}
+
+		}
+	}
 }
 
-// Add template filter dropdown to Pages list
+// Add template filter dropdown to Pages list for Authors, Editors and Admins
+add_action( 'restrict_manage_posts', 'wpe_template_view_filter_dropdown' );
 function wpe_template_view_filter_dropdown() {
 
-  if( current_user_can('author') || current_user_can('administrator') ) {
+  if( current_user_can('author') || current_user_can('author') || current_user_can('administrator') ) {
 
     global $typenow;
-    global $wp_query;
 
     if ( $typenow == 'page' ) {
       echo '<select name="template" id="template">';
@@ -110,24 +111,23 @@ function wpe_template_view_filter_dropdown() {
     }
   }
 }
-add_action( 'restrict_manage_posts', 'wpe_template_view_filter_dropdown' );
 
 // Execute selected Template filter on Pages query
+add_filter( 'parse_query', 'wpe_template_filter_by_selected_template' );
 function wpe_template_filter_by_selected_template( $query ) {
 
-  global $pagenow;
+	global $pagenow;
 
-// Get the post type
-  $post_type = isset( $_GET['post_type'] ) ? $_GET['post_type'] : '';
+	// Get the post type
+	$post_type = isset( $_GET['post_type'] ) ? $_GET['post_type'] : '';
 
-  if ( is_admin() && $pagenow=='edit.php' && $post_type == 'page'
+	if ( is_admin() && $pagenow=='edit.php' && $post_type == 'page'
     && isset( $_GET['template'] ) && $_GET['template'] !='' ) {
 
-    $query->query_vars['meta_key'] = '_wp_page_template';
-  $query->query_vars['meta_value'] = $_GET['template'];
-  $query->query_vars['meta_compare'] = '=';
-}
+		$query->query_vars['meta_key'] = '_wp_page_template';
+		$query->query_vars['meta_value'] = $_GET['template'];
+		$query->query_vars['meta_compare'] = '=';
+
+	}
 
 }
-add_filter( 'parse_query', 'wpe_template_filter_by_selected_template' );
-
